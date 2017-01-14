@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 print_usage () {
-   echo "Usage $0 <log_file> <stat_file> <needle> <-min|max> 5 [<-format> ]"
+   echo "Usage $0 <log_file> <needle> -min|max <limit> -interval <minutes>  [-format <format> ]"
    echo "   log_file    path to file that will be searched"
    echo "   needle      String to search file for (uses grep so regex can be used)"
    echo "   min         Minimum number of times the needle is expected to be in the log"
    echo "   max         Maximum of times the needle is expected to be in the log"
    echo "   interval    Number of minutes we expect to see messages                                                 "
-   echo "   format      Format of dates in log to look for  (use format code found in date man) Defaults to ISO-8601("%Y-%m-%dT%H:%M")"
+   echo "   format      Format of dates in log to look for. Uses format codes found in date man. Defaults to ISO-8601("%Y-%m-%dT%H:%M")"
 }
 
 compare_date () {
