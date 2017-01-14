@@ -3,12 +3,11 @@
 print_usage () {
    echo "Usage $0 <log_file> <stat_file> <needle> <-min|max> 5 [<-format> ]"
    echo "   log_file    path to file that will be searched"
-   echo "   stat_file   Maintains where the last check was ran from"
    echo "   needle      String to search file for (uses grep so regex can be used)"
    echo "   min         Minimum number of times the needle is expected to be in the log"
    echo "   max         Maximum of times the needle is expected to be in the log"
-   echo "   interval    Number of minutes                                                   "
-   echo "   format      Format for dates in log  (use format code found in date man) Defaults to ISO-8601("%Y-%m-%dT%H:%M")"
+   echo "   interval    Number of minutes we expect to see messages                                                 "
+   echo "   format      Format of dates in log to look for  (use format code found in date man) Defaults to ISO-8601("%Y-%m-%dT%H:%M")"
 }
 
 compare_date () {
@@ -26,16 +25,15 @@ compare_date () {
 
 
 
-if [[ $# -lt 7 ]]
+if [[ $# -lt 6 ]]
 then
    print_usage
    exit 1
 fi
 
 log_file=$1
-stat_file=$2
-needle=$3
-shift 3
+needle=$2
+shift 2
 
 interval=0
 min=0
@@ -68,36 +66,24 @@ then
 fi
 
 currentTime=$(date -Iminutes)
+lastTime=$(date --date="$currentTime - $interval minutes" -Iminutes)
 
-if [[ ! -f "$stat_file" ]]
+endDateStr=$(date --date="$currentTime" +"$format")
+lastDateStr=$(date --date="$lastTime" +"$format")
+
+#get lines from file
+found=$(awk '$1>="'$lastDateStr'" && $1 <="'$endDateStr'"' $log_file | grep -o "$needle" | wc -l)
+
+if [[ $found -lt $min ]] || [[ $max -gt "-1" && $found > $max ]]
 then
-  echo $(date --date="$currentTime - $interval minutes" -Iminutes) >$stat_file
-fi
-
-lastTime=$(cat $stat_file)
-spanTime=$(date --date="$lastTime + $interval minutes" -Iminutes)
-
-issue=0
-while [[ $(compare_date $spanTime $currentTime) -gt 0 ]]; do
-
-   lastDateStr=$(date --date="$lastTime" +"$format")
-   endDateStr=$(date --date="$spanTime" +"$format")
-
-   #get lines from file
-   found=$(awk '$1>="'$lastDateStr'" && $1 <="'$endDateStr'"' $log_file | grep -o "$needle" | wc -l)
-
-   if [[ $found -lt $min ]] || [[ $max -gt "-1" && $found > $max ]]
+   maxStr=""
+   if [[ "$max" -ne "-1" ]]
    then
-      echo "PROBLEM: There were $found occurrences of \"$needle\" between $lastDateStr and $endDateStr. Expected at least $min and at most $max."
-      issue+=1
-   else
-      echo "OK: $found occurrences of \"$needle\" between $lastDateStr and $endDateStr."
+      maxStr=" and at most $max"
    fi
-
-   lastTime=$spanTime
-   spanTime=$(date --date="$lastTime + $interval minutes" -Iminutes)
-done
-
-echo $spanTime >$stat_file
-
-exit $issue
+   echo "PROBLEM: There were $found occurrences of \"$needle\" between $lastDateStr and $endDateStr. Expected at least $min$maxStr."
+   exit 1
+else
+   echo "OK: $found occurrences of \"$needle\" between $lastDateStr and $endDateStr."
+   exit 0
+fi
