@@ -23,7 +23,7 @@ Jan 02 2017 03:34:25 localhost INFO, success
 Jan 02 2017 03:34:27 localhost ERROR, failed operation
 ```
 
-And we want to check whether we got more than 10 errors over the last 15 minutes, then we would run the following:
+And we want to check that we didn't get more than 10 errors over the last 15 minutes, then we would run the following:
 
 ```
 ./log_thresholder.sh app.log "ERROR" -max 10 -interval 15 -format "%h %d %& %H:%M" 
