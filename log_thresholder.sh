@@ -10,21 +10,6 @@ print_usage () {
    echo "   format      Format of dates in log to look for. Uses format codes found in date man. Defaults to ISO-8601("%Y-%m-%dT%H:%M")"
 }
 
-compare_date () {
-   if [[ $# -lt 2 ]]
-   then
-      exit 1
-   fi
-
-   t1=$(date --date="$1" +"%s")
-   t2=$(date --date="$2" +"%s")
-   ((td=$t2-t1))
-
-   echo $td
-}
-
-
-
 if [[ $# -lt 6 ]]
 then
    print_usage
